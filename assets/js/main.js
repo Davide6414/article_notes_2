@@ -1,8 +1,7 @@
-// Minimal interactivity for the static pages
+// Minimal interactivity for visualization + edit (no insertion)
 const SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Fetch all tables at once so pages can parse locally later
   try {
     const url = new URL(SHEETS_ENDPOINT);
     url.searchParams.set('action', 'tables');
@@ -18,33 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       console.warn('Fetch failed, trying JSONP fallback:', e);
     }
-    if (!ok) {
-      await loadSheetsJSONP();
-    }
+    if (!ok) await loadSheetsJSONP();
   } catch (err) {
     console.warn('Sheets fetch error:', err);
   }
-  const notesForm = document.getElementById('form-notes');
-  if (notesForm) {
-    notesForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(notesForm).entries());
-      console.log('Notes submit:', data);
-      alert('Nota salvata localmente (demo). Vedi console.');
-    });
-    setupNotesPage();
-  }
-
-  const dataForm = document.getElementById('form-data');
-  if (dataForm) {
-    dataForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(dataForm).entries());
-      console.log('Data submit:', data);
-      alert('Dato salvato localmente (demo). Vedi console.');
-    });
-    setupDataPage();
-  }
+  setupNotesPage();
+  setupDataPage();
 });
 
 function loadSheetsJSONP(){
@@ -86,27 +64,20 @@ function fillDatalist(id, items){
 }
 
 function setupNotesPage(){
-  const sheets = window.__SHEETS__ || {};
-  const notes = sheets['Notes'] || { headers: [], rows: [] };
-  // suggestions
-  fillDatalist('dl-notes-type', pluckColumn(notes.rows, 'type'));
-  fillDatalist('dl-notes-tags', splitTags(pluckColumn(notes.rows, 'tags')));
-  // list render
   const mount = document.getElementById('notes-list');
   if (!mount) return;
+  const sheets = window.__SHEETS__ || {};
+  const notes = sheets['Notes'] || { headers: [], rows: [] };
+  fillDatalist('dl-notes-type', pluckColumn(notes.rows, 'type'));
+  fillDatalist('dl-notes-tags', splitTags(pluckColumn(notes.rows, 'tags')));
   const rows = notes.rows || [];
   const table = document.createElement('table');
-  table.innerHTML = '<thead><tr><th>Title</th><th>Type</th><th>Tags</th><th>DOI</th><th>Link</th></tr></thead>';
+  table.innerHTML = '<thead><tr><th>Title</th><th>Type</th><th>Tags</th><th>DOI</th><th>Link</th><th>Azioni</th></tr></thead>';
   const tb = document.createElement('tbody');
   rows.slice(0, 200).forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(r.title||'')}</td>
-      <td>${escapeHtml(r.type||'')}</td>
-      <td>${escapeHtml(r.tags||'')}</td>
-      <td>${escapeHtml(r.doi||'')}</td>
-      <td>${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</td>
-    `;
+    tr.dataset.row = r.row;
+    appendNotesCells(tr, r);
     tb.appendChild(tr);
   });
   table.appendChild(tb);
@@ -115,36 +86,150 @@ function setupNotesPage(){
 }
 
 function setupDataPage(){
+  const mount = document.getElementById('data-list');
+  if (!mount) return;
   const sheets = window.__SHEETS__ || {};
   const data = sheets['Data'] || { headers: [], rows: [] };
-  // suggestions
   fillDatalist('dl-data-variable', pluckColumn(data.rows, 'variable'));
   fillDatalist('dl-data-unit', pluckColumn(data.rows, 'unit'));
   fillDatalist('dl-data-type', pluckColumn(data.rows, 'dataType'));
   fillDatalist('dl-data-tags', splitTags(pluckColumn(data.rows, 'dataTags')));
-  // list render
-  const mount = document.getElementById('data-list');
-  if (!mount) return;
   const rows = data.rows || [];
   const table = document.createElement('table');
-  table.innerHTML = '<thead><tr><th>Variable</th><th>Value</th><th>ControlValue</th><th>Unit</th><th>N</th><th>Link</th><th>DOI</th></tr></thead>';
+  table.innerHTML = '<thead><tr><th>Variable</th><th>Value</th><th>ControlValue</th><th>Unit</th><th>N</th><th>Link</th><th>DOI</th><th>Azioni</th></tr></thead>';
   const tb = document.createElement('tbody');
   rows.slice(0, 200).forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(r.variable||'')}</td>
-      <td>${escapeHtml(r.value||'')}</td>
-      <td>${escapeHtml(r.controlValue||'')}</td>
-      <td>${escapeHtml(r.unit||'')}</td>
-      <td>${escapeHtml(r.n||'')}</td>
-      <td>${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</td>
-      <td>${escapeHtml(r.doi||'')}</td>
-    `;
+    tr.dataset.row = r.row;
+    appendDataCells(tr, r);
     tb.appendChild(tr);
   });
   table.appendChild(tb);
   mount.innerHTML = '<h2>Elenco Dati</h2>';
   mount.appendChild(table);
+}
+
+function appendNotesCells(tr, r){
+  tr.innerHTML = '';
+  const cells = [
+    td(escapeHtml(r.title||'')),
+    td(escapeHtml(r.type||'')),
+    td(escapeHtml(r.tags||'')),
+    td(escapeHtml(r.doi||'')),
+    td(r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''),
+    td(`<button class="btn" data-act="edit">Modifica</button>`)
+  ];
+  cells.forEach(c => tr.appendChild(c));
+  tr.querySelector('[data-act="edit"]').addEventListener('click', () => editNotesRow(tr, r));
+}
+
+function editNotesRow(tr, r){
+  tr.innerHTML = '';
+  const inputs = {
+    title: input(r.title||''),
+    type: input(r.type||'', 'dl-notes-type'),
+    tags: input(r.tags||'', 'dl-notes-tags'),
+    doi: input(r.doi||''),
+    link: input(r.link||'')
+  };
+  ['title','type','tags','doi','link'].forEach(k => tr.appendChild(td('').appendChildRet(inputs[k])));
+  const actions = td('');
+  actions.innerHTML = `<button class="btn" data-act="save">Salva</button> <button class="btn" data-act="cancel">Annulla</button>`;
+  tr.appendChild(actions);
+  actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendNotesCells(tr, r));
+  actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
+    const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+    const ok = await updateSheet('Notes', Number(tr.dataset.row), patch);
+    if (ok) { Object.assign(r, patch); appendNotesCells(tr, r); } else { alert('Aggiornamento fallito'); }
+  });
+}
+
+function appendDataCells(tr, r){
+  tr.innerHTML = '';
+  const cells = [
+    td(escapeHtml(r.variable||'')),
+    td(escapeHtml(r.value||'')),
+    td(escapeHtml(r.controlValue||'')),
+    td(escapeHtml(r.unit||'')),
+    td(escapeHtml(r.n||'')),
+    td(r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''),
+    td(escapeHtml(r.doi||'')),
+    td(`<button class="btn" data-act="edit">Modifica</button>`)
+  ];
+  cells.forEach(c => tr.appendChild(c));
+  tr.querySelector('[data-act="edit"]').addEventListener('click', () => editDataRow(tr, r));
+}
+
+function editDataRow(tr, r){
+  tr.innerHTML = '';
+  const inputs = {
+    variable: input(r.variable||'', 'dl-data-variable'),
+    value: input(r.value||''),
+    controlValue: input(r.controlValue||''),
+    unit: input(r.unit||'', 'dl-data-unit'),
+    n: input(r.n||''),
+    link: input(r.link||''),
+    doi: input(r.doi||'')
+  };
+  ['variable','value','controlValue','unit','n','link','doi'].forEach(k => tr.appendChild(td('').appendChildRet(inputs[k])));
+  const actions = td('');
+  actions.innerHTML = `<button class="btn" data-act="save">Salva</button> <button class="btn" data-act="cancel">Annulla</button>`;
+  tr.appendChild(actions);
+  actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendDataCells(tr, r));
+  actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
+    const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+    const ok = await updateSheet('Data', Number(tr.dataset.row), patch);
+    if (ok) { Object.assign(r, patch); appendDataCells(tr, r); } else { alert('Aggiornamento fallito'); }
+  });
+}
+
+function td(html){
+  const d = document.createElement('td');
+  if (html) d.innerHTML = html;
+  return d;
+}
+Element.prototype.appendChildRet = function(el){ this.appendChild(el); return this; };
+
+function input(val, listId){
+  const el = document.createElement('input');
+  el.value = String(val||'');
+  if (listId) el.setAttribute('list', listId);
+  return el;
+}
+
+async function updateSheet(sheet, row, patch){
+  try {
+    const resp = await fetch(SHEETS_ENDPOINT, {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', sheet, row, data: patch })
+    });
+    if (!resp.ok) return false;
+    const j = await resp.json().catch(()=>null);
+    return !!(j && j.ok);
+  } catch (e) {
+    console.warn('updateSheet error:', e);
+    return await updateSheetJSONP(sheet, row, patch);
+  }
+}
+
+function updateSheetJSONP(sheet, row, patch){
+  return new Promise((resolve) => {
+    const cb = '__UPDATE_CB_' + Math.random().toString(36).slice(2);
+    window[cb] = (resp) => { try { resolve(!!(resp && resp.ok)); } finally { delete window[cb]; script.remove(); } };
+    const url = new URL(SHEETS_ENDPOINT);
+    url.searchParams.set('action','update');
+    url.searchParams.set('sheet', sheet);
+    url.searchParams.set('row', String(row));
+    url.searchParams.set('data', JSON.stringify(patch));
+    url.searchParams.set('callback', cb);
+    const script = document.createElement('script');
+    script.src = url.toString();
+    script.async = true;
+    document.head.appendChild(script);
+  });
 }
 
 function pluckColumn(rows, key){
@@ -165,3 +250,4 @@ function escapeHtml(s){
 function escapeAttr(s){
   return escapeHtml(s).replace(/"/g, '&quot;');
 }
+
