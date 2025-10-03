@@ -40,11 +40,11 @@
       </div>
       <div>
         <label for="n-tags">Tags</label>
-        <input id="n-tags" name="tags" />
+        <input id="n-tags" name="tags" list="dl-notes-tags" />
       </div>
       <div>
         <label for="n-type">Type</label>
-        <input id="n-type" name="type" />
+        <input id="n-type" name="type" list="dl-notes-type" />
       </div>
       <div class="full">
         <label for="n-note">Note</label>
@@ -55,9 +55,13 @@
         <button type="submit" class="btn btn-primary">Salva Nota</button>
       </div>
     </form>
+
+    <section id="notes-list" class="list"></section>
   </main>
 
+  <!-- datalists -->
+  <datalist id="dl-notes-tags"></datalist>
+  <datalist id="dl-notes-type"></datalist>
   <script src="assets/js/main.js"></script>
 </body>
 </html>
-

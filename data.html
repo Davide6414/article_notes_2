@@ -24,7 +24,7 @@
       </div>
       <div>
         <label for="d-variable">Variable</label>
-        <input id="d-variable" name="variable" />
+        <input id="d-variable" name="variable" list="dl-data-variable" />
       </div>
       <div>
         <label for="d-value">Value</label>
@@ -36,7 +36,7 @@
       </div>
       <div class="full">
         <label for="d-unit">Unit</label>
-        <input id="d-unit" name="unit" />
+        <input id="d-unit" name="unit" list="dl-data-unit" />
       </div>
       <div>
         <label for="d-n">N</label>
@@ -79,9 +79,15 @@
         <button type="submit" class="btn btn-primary">Salva Dato</button>
       </div>
     </form>
+
+    <section id="data-list" class="list"></section>
   </main>
 
+  <!-- datalists -->
+  <datalist id="dl-data-variable"></datalist>
+  <datalist id="dl-data-unit"></datalist>
+  <datalist id="dl-data-type"></datalist>
+  <datalist id="dl-data-tags"></datalist>
   <script src="assets/js/main.js"></script>
   </body>
   </html>
-
