@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Note • Data & Notes</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <strong>Note</strong>
+    </nav>
+    <h1>Nuova Nota</h1>
+  </header>
+
+  <main class="container">
+    <form id="form-notes" class="form-grid">
+      <div>
+        <label for="n-title">Title</label>
+        <input id="n-title" name="title" />
+      </div>
+      <div>
+        <label for="n-doi">DOI</label>
+        <input id="n-doi" name="doi" />
+      </div>
+      <div class="full">
+        <label for="n-url">URL</label>
+        <input id="n-url" name="url" />
+      </div>
+      <div class="full">
+        <label for="n-link">Link (con highlight)</label>
+        <input id="n-link" name="link" />
+      </div>
+      <div class="full">
+        <label for="n-text">Text</label>
+        <textarea id="n-text" name="text"></textarea>
+      </div>
+      <div>
+        <label for="n-tags">Tags</label>
+        <input id="n-tags" name="tags" />
+      </div>
+      <div>
+        <label for="n-type">Type</label>
+        <input id="n-type" name="type" />
+      </div>
+      <div class="full">
+        <label for="n-note">Note</label>
+        <textarea id="n-note" name="note"></textarea>
+      </div>
+
+      <div class="full">
+        <button type="submit" class="btn btn-primary">Salva Nota</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
+

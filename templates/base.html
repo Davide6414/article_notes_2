@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Data & Notes{% endblock %}</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="breadcrumb">
+      <a href="/index.html">Home</a>
+      {% block breadcrumb %}{% endblock %}
+    </nav>
+    <h1>{% block header %}Data & Notes{% endblock %}</h1>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/assets/js/main.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+

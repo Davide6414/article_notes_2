@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dati • Data & Notes</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <strong>Dati</strong>
+    </nav>
+    <h1>Nuova Misura</h1>
+  </header>
+
+  <main class="container">
+    <form id="form-data" class="form-grid">
+      <div>
+        <label for="d-doi">DOI</label>
+        <input id="d-doi" name="doi" />
+      </div>
+      <div>
+        <label for="d-variable">Variable</label>
+        <input id="d-variable" name="variable" />
+      </div>
+      <div>
+        <label for="d-value">Value</label>
+        <input id="d-value" name="value" />
+      </div>
+      <div>
+        <label for="d-control-value">ControlValue</label>
+        <input id="d-control-value" name="controlValue" />
+      </div>
+      <div class="full">
+        <label for="d-unit">Unit</label>
+        <input id="d-unit" name="unit" />
+      </div>
+      <div>
+        <label for="d-n">N</label>
+        <input id="d-n" name="n" />
+      </div>
+      <div>
+        <label for="d-mean">Mean</label>
+        <input id="d-mean" name="mean" />
+      </div>
+      <div>
+        <label for="d-std">StdDev</label>
+        <input id="d-std" name="stdDev" />
+      </div>
+      <div>
+        <label for="d-ctrl-n">ControlN</label>
+        <input id="d-ctrl-n" name="controlN" />
+      </div>
+      <div>
+        <label for="d-ctrl-mean">ControlMean</label>
+        <input id="d-ctrl-mean" name="controlMean" />
+      </div>
+      <div>
+        <label for="d-ctrl-std">ControlStdDev</label>
+        <input id="d-ctrl-std" name="controlStdDev" />
+      </div>
+      <div class="full">
+        <label for="d-url">URL</label>
+        <input id="d-url" name="url" />
+      </div>
+      <div class="full">
+        <label for="d-link">Link (con highlight)</label>
+        <input id="d-link" name="link" />
+      </div>
+      <div class="full">
+        <label for="d-notes">Notes</label>
+        <textarea id="d-notes" name="notes"></textarea>
+      </div>
+
+      <div class="full">
+        <button type="submit" class="btn btn-primary">Salva Dato</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+  </body>
+  </html>
+
