@@ -2,25 +2,8 @@
 const SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const url = new URL(SHEETS_ENDPOINT);
-    url.searchParams.set('action', 'tables');
-    let ok = false;
-    try {
-      const resp = await fetch(url.toString(), { method: 'GET', mode: 'cors', cache: 'no-store' });
-      const data = await resp.json();
-      if (data && data.ok) {
-        window.__SHEETS__ = data.sheets || {};
-        ok = true;
-        console.log('Loaded sheets via fetch:', Object.keys(window.__SHEETS__));
-      }
-    } catch (e) {
-      console.warn('Fetch failed, trying JSONP fallback:', e);
-    }
-    if (!ok) await loadSheetsJSONP();
-  } catch (err) {
-    console.warn('Sheets fetch error:', err);
-  }
+  // Evita CORS: usa direttamente JSONP per caricare le tabelle
+  await loadSheetsJSONP();
   setupNotesPage();
   setupDataPage();
 });
@@ -198,21 +181,8 @@ function input(val, listId){
 }
 
 async function updateSheet(sheet, row, patch){
-  try {
-    const resp = await fetch(SHEETS_ENDPOINT, {
-      method: 'POST',
-      mode: 'cors',
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', sheet, row, data: patch })
-    });
-    if (!resp.ok) return false;
-    const j = await resp.json().catch(()=>null);
-    return !!(j && j.ok);
-  } catch (e) {
-    console.warn('updateSheet error:', e);
-    return await updateSheetJSONP(sheet, row, patch);
-  }
+  // Evita CORS su GitHub Pages: usa sempre JSONP per l'update
+  return await updateSheetJSONP(sheet, row, patch);
 }
 
 function updateSheetJSONP(sheet, row, patch){
@@ -250,4 +220,3 @@ function escapeHtml(s){
 function escapeAttr(s){
   return escapeHtml(s).replace(/"/g, '&quot;');
 }
-
