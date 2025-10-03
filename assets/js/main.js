@@ -3,6 +3,7 @@ const SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarP
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Evita CORS: usa direttamente JSONP per caricare le tabelle
+  console.log('[tables] loading via JSONP');
   await loadSheetsJSONP();
   setupNotesPage();
   setupDataPage();
@@ -15,7 +16,10 @@ function loadSheetsJSONP(){
       try {
         if (resp && resp.ok && resp.sheets) {
           window.__SHEETS__ = resp.sheets;
-          console.log('Loaded sheets via JSONP:', Object.keys(window.__SHEETS__));
+          const names = Object.keys(window.__SHEETS__);
+          console.log('[tables] loaded', { count: names.length, names });
+        } else {
+          console.warn('[tables] jsonp response not ok', resp);
         }
       } finally {
         delete window[cb];
@@ -29,6 +33,7 @@ function loadSheetsJSONP(){
     const script = document.createElement('script');
     script.src = url.toString();
     script.async = true;
+    console.log('[tables] jsonp url', script.src);
     document.head.appendChild(script);
   });
 }
@@ -122,8 +127,16 @@ function editNotesRow(tr, r){
   actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendNotesCells(tr, r));
   actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
     const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+    console.log('[update] sending', { sheet: 'Notes', row: Number(tr.dataset.row), patch });
     const ok = await updateSheet('Notes', Number(tr.dataset.row), patch);
-    if (ok) { Object.assign(r, patch); appendNotesCells(tr, r); } else { alert('Aggiornamento fallito'); }
+    if (ok) {
+      Object.assign(r, patch);
+      console.log('[update] saved', { sheet: 'Notes', row: Number(tr.dataset.row) });
+      appendNotesCells(tr, r);
+    } else {
+      console.warn('[update] failed', { sheet: 'Notes', row: Number(tr.dataset.row) });
+      alert('Aggiornamento fallito');
+    }
   });
 }
 
@@ -161,8 +174,16 @@ function editDataRow(tr, r){
   actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendDataCells(tr, r));
   actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
     const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+    console.log('[update] sending', { sheet: 'Data', row: Number(tr.dataset.row), patch });
     const ok = await updateSheet('Data', Number(tr.dataset.row), patch);
-    if (ok) { Object.assign(r, patch); appendDataCells(tr, r); } else { alert('Aggiornamento fallito'); }
+    if (ok) {
+      Object.assign(r, patch);
+      console.log('[update] saved', { sheet: 'Data', row: Number(tr.dataset.row) });
+      appendDataCells(tr, r);
+    } else {
+      console.warn('[update] failed', { sheet: 'Data', row: Number(tr.dataset.row) });
+      alert('Aggiornamento fallito');
+    }
   });
 }
 
@@ -188,7 +209,15 @@ async function updateSheet(sheet, row, patch){
 function updateSheetJSONP(sheet, row, patch){
   return new Promise((resolve) => {
     const cb = '__UPDATE_CB_' + Math.random().toString(36).slice(2);
-    window[cb] = (resp) => { try { resolve(!!(resp && resp.ok)); } finally { delete window[cb]; script.remove(); } };
+    window[cb] = (resp) => {
+      try {
+        console.log('[update] response', resp);
+        resolve(!!(resp && resp.ok));
+      } finally {
+        delete window[cb];
+        script.remove();
+      }
+    };
     const url = new URL(SHEETS_ENDPOINT);
     url.searchParams.set('action','update');
     url.searchParams.set('sheet', sheet);
@@ -198,6 +227,7 @@ function updateSheetJSONP(sheet, row, patch){
     const script = document.createElement('script');
     script.src = url.toString();
     script.async = true;
+    console.log('[update] jsonp url', script.src);
     document.head.appendChild(script);
   });
 }
