@@ -99,6 +99,7 @@ function setupDataPage(){
 
 function appendNotesCells(tr, r){
   tr.innerHTML = '';
+  if (r && r.row && !tr.dataset.row) tr.dataset.row = String(r.row);
   const cells = [
     td(escapeHtml(r.title||'')),
     td(escapeHtml(r.type||'')),
@@ -127,8 +128,9 @@ function editNotesRow(tr, r){
   actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendNotesCells(tr, r));
   actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
     const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
-    console.log('[update] sending', { sheet: 'Notes', row: Number(tr.dataset.row), patch });
-    const ok = await updateSheet('Notes', Number(tr.dataset.row), patch);
+    const rowNum = getRowNumberFor(tr, r, 'Notes');
+    console.log('[update] sending', { sheet: 'Notes', row: rowNum, patch });
+    const ok = await updateSheet('Notes', rowNum, patch);
     if (ok) {
       Object.assign(r, patch);
       console.log('[update] saved', { sheet: 'Notes', row: Number(tr.dataset.row) });
@@ -142,6 +144,7 @@ function editNotesRow(tr, r){
 
 function appendDataCells(tr, r){
   tr.innerHTML = '';
+  if (r && r.row && !tr.dataset.row) tr.dataset.row = String(r.row);
   const cells = [
     td(escapeHtml(r.variable||'')),
     td(escapeHtml(r.value||'')),
@@ -174,8 +177,9 @@ function editDataRow(tr, r){
   actions.querySelector('[data-act="cancel"]').addEventListener('click', () => appendDataCells(tr, r));
   actions.querySelector('[data-act="save"]').addEventListener('click', async () => {
     const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
-    console.log('[update] sending', { sheet: 'Data', row: Number(tr.dataset.row), patch });
-    const ok = await updateSheet('Data', Number(tr.dataset.row), patch);
+    const rowNum = getRowNumberFor(tr, r, 'Data');
+    console.log('[update] sending', { sheet: 'Data', row: rowNum, patch });
+    const ok = await updateSheet('Data', rowNum, patch);
     if (ok) {
       Object.assign(r, patch);
       console.log('[update] saved', { sheet: 'Data', row: Number(tr.dataset.row) });
@@ -230,6 +234,23 @@ function updateSheetJSONP(sheet, row, patch){
     console.log('[update] jsonp url', script.src);
     document.head.appendChild(script);
   });
+}
+
+function getRowNumberFor(tr, r, sheet){
+  let row = Number(tr && tr.dataset ? tr.dataset.row : undefined);
+  if (!row || Number.isNaN(row)) row = Number(r && r.row);
+  if (!row || Number.isNaN(row)) {
+    try {
+      const rows = (window.__SHEETS__ && window.__SHEETS__[sheet] && window.__SHEETS__[sheet].rows) || [];
+      const idx = rows.indexOf(r);
+      if (idx >= 0) row = idx + 2; // header is row 1
+    } catch {}
+  }
+  if (!row || Number.isNaN(row)) {
+    console.warn('[update] missing row number; cannot update', { sheet, r });
+    row = NaN;
+  }
+  return row;
 }
 
 function pluckColumn(rows, key){
