@@ -27,6 +27,10 @@ body{
 .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
 .card{display:block;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--panel);text-decoration:none;color:var(--text)}
 .card h2{margin:0 0 8px 0}
+/* Colorazione card per type */
+.card.note-card{border-left:6px solid var(--border); position:relative}
+.card.note-card.colored{border-left-color:var(--type-color, var(--accent))}
+.card.note-card.colored::before{content:""; position:absolute; inset:0; background:linear-gradient(0deg, color-mix(in srgb, var(--type-color, transparent) 12%, transparent), transparent); pointer-events:none}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid .full{grid-column:1 / -1}
@@ -79,6 +83,7 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .note-card .note-id{font-weight:600;color:var(--muted)}
 .note-card .card-row{margin:4px 0}
 .note-card .card-actions{display:flex;gap:6px}
+.note-card .type-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--type-color, var(--accent));margin-left:6px}
 
 /* Chips & media */
 .muted{color:var(--muted)}
