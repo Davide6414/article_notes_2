@@ -79,3 +79,10 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .note-card .note-id{font-weight:600;color:var(--muted)}
 .note-card .card-row{margin:4px 0}
 .note-card .card-actions{display:flex;gap:6px}
+
+/* Chips & media */
+.muted{color:var(--muted)}
+.tags-row .tag-chip{display:inline-block;margin:2px 6px 2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);font-size:12px}
+.animal-chip{display:inline-block;margin:2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#334155;font-size:12px}
+.note-image{margin-top:8px}
+.note-image img{max-width:100%;display:block;border-radius:8px;border:1px solid var(--border);background:#0b1220}

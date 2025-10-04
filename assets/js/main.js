@@ -199,6 +199,13 @@ function renderNoteCard(container, r){
   const card = document.createElement('div');
   card.className = 'card note-card';
   if (r && r.row) card.dataset.row = String(r.row);
+  const tags = String(r.tags||'')
+    .split(/[;,]/)
+    .map(t=>String(t).trim())
+    .filter(Boolean);
+  const tagHtml = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(' ');
+  const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '<span class="muted">—</span>';
+  const imgHtml = r.imageLink ? `<div class="note-image"><img src="${escapeAttr(r.imageLink)}" alt="Image" onerror="this.style.display='none'"/></div>` : '';
   card.innerHTML = `
     <div class="card-header">
       <div class="note-id">ID: ${escapeHtml(r.id||'')}</div>
@@ -209,11 +216,13 @@ function renderNoteCard(container, r){
     </div>
     <div class="card-body">
       <div class="card-row"><strong>Title:</strong> ${escapeHtml(r.title||'')}</div>
-      <div class="card-row"><strong>Tags:</strong> ${escapeHtml(r.tags||'')}</div>
+      <div class="card-row tags-row"><strong>Tags:</strong> ${tagHtml || '<span class="muted">—</span>'}</div>
+      <div class="card-row"><strong>Animal:</strong> ${animalHtml}</div>
       <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>
       <div class="card-row"><strong>DOI:</strong> ${escapeHtml(r.doi||'')}</div>
       <div class="card-row"><strong>Link:</strong> ${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</div>
       <div class="card-row"><strong>LinkedIDs:</strong> ${escapeHtml(r.linkedIds||'')}</div>
+      ${imgHtml}
     </div>`;
   container.appendChild(card);
   const btnEdit = card.querySelector('[data-act="edit"]');
