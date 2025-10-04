@@ -34,6 +34,10 @@ function loadSheetsJSONP(){
     script.src = url.toString();
     script.async = true;
     console.log('[tables] jsonp url', script.src);
+    script.onerror = () => {
+      console.error('[tables] jsonp load error', script.src);
+      resolve();
+    };
     document.head.appendChild(script);
   });
 }
@@ -60,7 +64,7 @@ function setupNotesPage(){
   fillDatalist('dl-notes-tags', splitTags(pluckColumn(notes.rows, 'tags')));
   const rows = notes.rows || [];
   const table = document.createElement('table');
-  table.innerHTML = '<thead><tr><th>Title</th><th>Type</th><th>Tags</th><th>DOI</th><th>Link</th><th>Azioni</th></tr></thead>';
+  table.innerHTML = '<thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Tags</th><th>DOI</th><th>Link</th><th>LinkedIDs</th><th>Azioni</th></tr></thead>';
   const tb = document.createElement('tbody');
   rows.slice(0, 200).forEach(r => {
     const tr = document.createElement('tr');
@@ -101,15 +105,29 @@ function appendNotesCells(tr, r){
   tr.innerHTML = '';
   if (r && r.row && !tr.dataset.row) tr.dataset.row = String(r.row);
   const cells = [
+    td(escapeHtml(r.id||'')),
     td(escapeHtml(r.title||'')),
     td(escapeHtml(r.type||'')),
     td(escapeHtml(r.tags||'')),
     td(escapeHtml(r.doi||'')),
     td(r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''),
-    td(`<button class="btn" data-act="edit">Modifica</button>`)
+    td(escapeHtml(r.linkedIds||'')),
+    td(`<button class="btn" data-act="link">Collega</button> <button class="btn" data-act="edit">Modifica</button>`)
   ];
   cells.forEach(c => tr.appendChild(c));
-  tr.querySelector('[data-act="edit"]').addEventListener('click', () => editNotesRow(tr, r));
+  const btnEdit = tr.querySelector('[data-act="edit"]');
+  if (btnEdit) btnEdit.addEventListener('click', () => editNotesRow(tr, r));
+  const btnLink = tr.querySelector('[data-act="link"]');
+  if (btnLink) btnLink.addEventListener('click', async () => {
+    const rowNum = getRowNumberFor(tr, r, 'Notes');
+    const selection = await openLinkDialog(r, (window.__SHEETS__ && window.__SHEETS__['Notes'] && window.__SHEETS__['Notes'].rows) || []);
+    if (!selection) return;
+    const linked = selection.join(',');
+    console.log('[link] chosen', { row: rowNum, linked });
+    const ok = await updateSheet('Notes', rowNum, { linkedIds: linked });
+    if (ok) { r.linkedIds = linked; appendNotesCells(tr, r); }
+    else { alert('Salvataggio link fallito'); }
+  });
 }
 
 function editNotesRow(tr, r){
@@ -232,6 +250,10 @@ function updateSheetJSONP(sheet, row, patch){
     script.src = url.toString();
     script.async = true;
     console.log('[update] jsonp url', script.src);
+    script.onerror = () => {
+      console.error('[update] jsonp load error', script.src);
+      resolve(false);
+    };
     document.head.appendChild(script);
   });
 }
@@ -270,4 +292,86 @@ function escapeHtml(s){
 }
 function escapeAttr(s){
   return escapeHtml(s).replace(/"/g, '&quot;');
+}
+
+// ---- Dialog linking (Notes) ----
+function openLinkDialog(currentRow, allRows){
+  return new Promise((resolve) => {
+    const preselected = new Set(String(currentRow && currentRow.linkedIds || '').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean));
+    const selfId = String(currentRow && (currentRow.id || currentRow.row || ''));
+    if (selfId) preselected.delete(selfId); // non linkare a se stessa
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Collega righe (Notes)</h3>
+          <button class="modal-close" title="Chiudi">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-search">
+            <input type="text" placeholder="Filtra per ID o titolo..." class="modal-filter" />
+            <div class="modal-actions-small">
+              <button class="btn btn-small modal-select-all">Seleziona tutti</button>
+              <button class="btn btn-small modal-clear-all">Pulisci</button>
+            </div>
+          </div>
+          <div class="modal-list"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn modal-cancel">Annulla</button>
+          <button class="btn btn-primary modal-confirm">Conferma</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const list = overlay.querySelector('.modal-list');
+    const filter = overlay.querySelector('.modal-filter');
+    const btnClose = overlay.querySelector('.modal-close');
+    const btnCancel = overlay.querySelector('.modal-cancel');
+    const btnConfirm = overlay.querySelector('.modal-confirm');
+    const btnSelAll = overlay.querySelector('.modal-select-all');
+    const btnClrAll = overlay.querySelector('.modal-clear-all');
+
+    const candidates = (allRows||[])
+      .map(r => ({ id: String(r.id || r.row || ''), title: String(r.title||''), row: r }))
+      .filter(x => x.id && x.id !== selfId);
+
+    function render(filterText=''){
+      const q = String(filterText||'').toLowerCase();
+      list.innerHTML = '';
+      candidates
+        .filter(x => !q || x.id.toLowerCase().includes(q) || x.title.toLowerCase().includes(q))
+        .slice(0, 500)
+        .forEach(x => {
+          const item = document.createElement('label');
+          item.className = 'modal-item';
+          const checked = preselected.has(x.id);
+          item.innerHTML = `<input type="checkbox" value="${escapeAttr(x.id)}" ${checked?'checked':''}/> <span class="id">${escapeHtml(x.id)}</span> <span class="title">${escapeHtml(x.title)}</span>`;
+          list.appendChild(item);
+        });
+    }
+    render();
+
+    function close(ret){
+      try { document.body.removeChild(overlay); } catch {}
+      resolve(ret);
+    }
+    btnClose.addEventListener('click', ()=>close(null));
+    btnCancel.addEventListener('click', ()=>close(null));
+    btnConfirm.addEventListener('click', ()=>{
+      const selected = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(i=>i.value);
+      close(selected);
+    });
+    btnSelAll.addEventListener('click', ()=>{
+      list.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.checked = true; });
+    });
+    btnClrAll.addEventListener('click', ()=>{
+      list.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.checked = false; });
+    });
+    filter.addEventListener('input', ()=>render(filter.value));
+    overlay.querySelector('.modal-backdrop').addEventListener('click', ()=>close(null));
+  });
 }
