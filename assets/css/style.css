@@ -81,7 +81,7 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .panel-header .chev{transition:transform .2s ease}
 .tab-panel.collapsed .panel-header .chev{transform:rotate(-90deg)}
 .panel-title{margin:0 0 8px 0;font-size:14px;color:var(--muted)}
-.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:12px}
 
 /* Note cards */
 .note-card .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -96,4 +96,5 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .animal-chip{display:inline-block;margin:2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#334155;font-size:12px}
 .note-image{margin-top:8px}
 .note-image img{max-width:100%;display:block;border-radius:8px;border:1px solid var(--border);background:#0b1220}
-.note-text{ text-decoration: underline; white-space: pre-wrap }
+.note-text{ text-decoration: none; white-space: pre-wrap; display:inline-block }
+.note-text-row{ text-align: center }
