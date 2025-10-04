@@ -60,16 +60,6 @@ function setupNotesPage(){
   fillDatalist('dl-notes-type', pluckColumn(NOTES_ROWS, 'type'));
   fillDatalist('dl-notes-tags', splitTags(pluckColumn(NOTES_ROWS, 'tags')));
 
-  const toggleBtn = document.getElementById('notesToggle');
-  if (toggleBtn) {
-    updateToggleAllLabel(toggleBtn);
-    toggleBtn.onclick = () => {
-      const collapseAll = anyExpanded();
-      applyCollapseAll(collapseAll);
-      updateToggleAllLabel(toggleBtn);
-      renderNotesGroups();
-    };
-  }
   renderNotesGroups();
 }
 
@@ -110,8 +100,6 @@ function renderNotesGroups(){
       const now = panel.classList.toggle('collapsed');
       COLLAPSE_STATE[t] = now;
       try { localStorage.setItem('notesCollapse', JSON.stringify(COLLAPSE_STATE)); } catch {}
-      const toggleBtn = document.getElementById('notesToggle');
-      if (toggleBtn) updateToggleAllLabel(toggleBtn);
     });
 
     const grid = document.createElement('div'); grid.className = 'panel-grid';
@@ -122,20 +110,7 @@ function renderNotesGroups(){
   });
 }
 
-function anyExpanded(){
-  // if any panel is not collapsed
-  const allTitles = new Set(NOTES_ROWS.map(r => String(r.title||'Senza titolo').trim() || 'Senza titolo'));
-  for (const t of allTitles) { if (!COLLAPSE_STATE[t]) return true; }
-  return false;
-}
-function applyCollapseAll(collapse){
-  const allTitles = new Set(NOTES_ROWS.map(r => String(r.title||'Senza titolo').trim() || 'Senza titolo'));
-  allTitles.forEach(t => COLLAPSE_STATE[t] = !!collapse);
-  try { localStorage.setItem('notesCollapse', JSON.stringify(COLLAPSE_STATE)); } catch {}
-}
-function updateToggleAllLabel(btn){
-  btn.textContent = anyExpanded() ? 'Comprimi tutti' : 'Espandi tutti';
-}
+// toggle-all removed as per request
 
 function renderNoteCard(container, r){
   const card = document.createElement('div');
