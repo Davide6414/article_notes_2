@@ -47,46 +47,29 @@ function fillDatalist(id, items){
     .forEach(v => { const o = document.createElement('option'); o.value = v; dl.appendChild(o); });
 }
 
+let NOTES_ROWS = [];
+let NOTES_MODE = (typeof localStorage !== 'undefined' && localStorage.getItem('notesMode')) || 'tabs';
+
 function setupNotesPage(){
   const tabsRoot = document.getElementById('notes-tabs');
   if (!tabsRoot) return;
   const sheets = window.__SHEETS__ || {};
   const notes = sheets['Notes'] || { headers: [], rows: [] };
-  const rows = (notes.rows || []).slice(0);
-  fillDatalist('dl-notes-type', pluckColumn(rows, 'type'));
-  fillDatalist('dl-notes-tags', splitTags(pluckColumn(rows, 'tags')));
+  NOTES_ROWS = (notes.rows || []).slice(0);
+  fillDatalist('dl-notes-type', pluckColumn(NOTES_ROWS, 'type'));
+  fillDatalist('dl-notes-tags', splitTags(pluckColumn(NOTES_ROWS, 'tags')));
 
-  const groups = {};
-  rows.forEach(r => { const key = String(r.title || 'Senza titolo').trim() || 'Senza titolo'; (groups[key] = groups[key] || []).push(r); });
-  const titles = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
-
-  const tablist = tabsRoot.querySelector('.tablist');
-  const panels = tabsRoot.querySelector('.panels');
-  tablist.innerHTML = '';
-  panels.innerHTML = '';
-
-  titles.forEach((t, idx) => {
-    const id = 'tab_' + idx;
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (idx===0?' active':'');
-    btn.type = 'button';
-    btn.setAttribute('role','tab');
-    btn.setAttribute('aria-controls', id);
-    btn.textContent = t || 'Senza titolo';
-    tablist.appendChild(btn);
-
-    const panel = document.createElement('div');
-    panel.className = 'tab-panel' + (idx===0?' active':'');
-    panel.id = id;
-    panel.setAttribute('role','tabpanel');
-    const grid = document.createElement('div');
-    grid.className = 'panel-grid';
-    (groups[t] || []).forEach(r => renderNoteCard(grid, r));
-    panel.appendChild(grid);
-    panels.appendChild(panel);
-
-    btn.addEventListener('click', () => activateTab(btn, panel));
-  });
+  const toggleBtn = document.getElementById('notesToggle');
+  if (toggleBtn) {
+    setToggleLabel(toggleBtn);
+    toggleBtn.onclick = () => {
+      NOTES_MODE = NOTES_MODE === 'tabs' ? 'all' : 'tabs';
+      if (typeof localStorage !== 'undefined') localStorage.setItem('notesMode', NOTES_MODE);
+      setToggleLabel(toggleBtn);
+      renderNotesView();
+    };
+  }
+  renderNotesView();
 }
 
 function activateTab(btn, panel){
@@ -96,6 +79,52 @@ function activateTab(btn, panel){
   const panels = tablist.nextElementSibling; if (!panels) return;
   panels.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   panel.classList.add('active');
+}
+
+function renderNotesView(){
+  const tabsRoot = document.getElementById('notes-tabs');
+  if (!tabsRoot) return;
+  const tablist = tabsRoot.querySelector('.tablist');
+  const panels = tabsRoot.querySelector('.panels');
+  tablist.innerHTML = '';
+  panels.innerHTML = '';
+
+  if (NOTES_MODE === 'all') {
+    tablist.style.display = 'none';
+    const panel = document.createElement('div');
+    panel.className = 'tab-panel active';
+    const grid = document.createElement('div');
+    grid.className = 'panel-grid';
+    NOTES_ROWS.forEach(r => renderNoteCard(grid, r));
+    panel.appendChild(grid);
+    panels.appendChild(panel);
+  } else {
+    tablist.style.display = '';
+    const groups = {};
+    NOTES_ROWS.forEach(r => { const key = String(r.title || 'Senza titolo').trim() || 'Senza titolo'; (groups[key] = groups[key] || []).push(r); });
+    const titles = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+    titles.forEach((t, idx) => {
+      const id = 'tab_' + idx;
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (idx===0?' active':'');
+      btn.type = 'button';
+      btn.setAttribute('role','tab');
+      btn.setAttribute('aria-controls', id);
+      btn.textContent = t || 'Senza titolo';
+      tablist.appendChild(btn);
+      const panel = document.createElement('div');
+      panel.className = 'tab-panel' + (idx===0?' active':'');
+      panel.id = id; panel.setAttribute('role','tabpanel');
+      const grid = document.createElement('div'); grid.className = 'panel-grid';
+      (groups[t] || []).forEach(r => renderNoteCard(grid, r));
+      panel.appendChild(grid); panels.appendChild(panel);
+      btn.addEventListener('click', () => activateTab(btn, panel));
+    });
+  }
+}
+
+function setToggleLabel(btn){
+  btn.textContent = NOTES_MODE === 'tabs' ? 'Passa a: Tutti' : 'Passa a: Schede';
 }
 
 function renderNoteCard(container, r){
@@ -250,4 +279,3 @@ function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
 const TYPE_COLORS = ['#ef4444','#f97316','#f59e0b','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#84cc16'];
 function hashString(s){ let h=0; for (let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h|=0; } return Math.abs(h); }
 function getTypeColor(type){ const t = String(type||'').trim().toLowerCase(); if (!t) return ''; return TYPE_COLORS[ hashString(t) % TYPE_COLORS.length ]; }
-
