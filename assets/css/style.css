@@ -1,11 +1,13 @@
 :root{
-  --bg:#0f172a;
-  --panel:#111827;
-  --panel-2:#0b1220;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --accent:#22c55e;
-  --border:#1f2937;
+  /* Forest + teal palette */
+  --bg:#0a1815;
+  --panel:#0f2420;
+  --panel-2:#0c1d19;
+  --text:#e8f5f1;
+  --muted:#a6c1ba;
+  --accent:#22c55e;   /* green */
+  --accent-2:#14b8a6; /* teal */
+  --border:#163c33;
 }
 
 *{box-sizing:border-box}
@@ -25,12 +27,12 @@ body{
 .container{max-width:920px;margin:0 auto;padding:16px}
 
 .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-.card{display:block;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--panel);text-decoration:none;color:var(--text)}
+.card{display:block;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);text-decoration:none;color:var(--text);box-shadow:0 6px 16px rgba(0,0,0,.25)}
 .card h2{margin:0 0 8px 0}
 /* Colorazione card per type */
 .card.note-card{border-left:6px solid var(--border); position:relative}
 .card.note-card.colored{border-left-color:var(--type-color, var(--accent))}
-.card.note-card.colored::before{content:""; position:absolute; inset:0; background:linear-gradient(0deg, color-mix(in srgb, var(--type-color, transparent) 12%, transparent), transparent); pointer-events:none}
+/* remove heavy overlay for simpler look */
 /* spazio per ID in basso a destra */
 .card.note-card{padding-bottom:28px}
 
@@ -40,8 +42,8 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 input,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text)}
 textarea{min-height:110px}
 
-.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer}
-.btn-primary{background:var(--accent);color:#082414}
+.btn{padding:10px 14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--panel-2);color:var(--text);transition:background .15s ease, transform .05s ease}
+.btn-primary{background:var(--accent-2);color:#072521;border-color:#0f4038}
 .btn-small{padding:6px 10px;font-size:12px}
 
 table{width:100%;border-collapse:collapse;margin-top:12px}
@@ -74,7 +76,7 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 /* toolbar removed */
 .tablist{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px}
 .tab-btn{padding:8px 12px;border:1px solid var(--border);border-radius:20px;background:var(--panel-2);cursor:pointer}
-.tab-btn.active{background:var(--accent);color:#082414}
+.tab-btn.active{background:var(--accent-2);color:#072521;border-color:#0f4038}
 .panels{margin-top:12px}
 .tab-panel{display:block}
 .tab-panel.collapsed .panel-grid{display:none}
@@ -104,3 +106,6 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .note-image img{max-width:100%;display:block;border-radius:8px;border:1px solid var(--border);background:#0b1220}
 .note-text{ text-decoration: none; white-space: pre-wrap; display:inline-block }
 .note-text-row{ text-align: center }
+
+.btn:hover{background:#12332c}
+.btn:active{transform:scale(.98)}
