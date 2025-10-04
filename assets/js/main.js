@@ -144,7 +144,7 @@ function renderNoteCard(container, r){
       </div>
     </div>
     <div class="card-body">
-      <div class="card-row"><strong>Title:</strong> ${escapeHtml(r.title||'')}</div>
+      <div class="card-row"><strong>Text:</strong> <span class="note-text">${escapeHtml(r.text||'')}</span></div>
       <div class="card-row tags-row"><strong>Tags:</strong> ${tagHtml || '<span class="muted">-</span>'}</div>
       <div class="card-row"><strong>Animal:</strong> ${animalHtml}</div>
       <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>

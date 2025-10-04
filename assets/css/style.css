@@ -96,3 +96,4 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .animal-chip{display:inline-block;margin:2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#334155;font-size:12px}
 .note-image{margin-top:8px}
 .note-image img{max-width:100%;display:block;border-radius:8px;border:1px solid var(--border);background:#0b1220}
+.note-text{ text-decoration: underline; white-space: pre-wrap }
