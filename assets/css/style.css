@@ -31,6 +31,8 @@ body{
 .card.note-card{border-left:6px solid var(--border); position:relative}
 .card.note-card.colored{border-left-color:var(--type-color, var(--accent))}
 .card.note-card.colored::before{content:""; position:absolute; inset:0; background:linear-gradient(0deg, color-mix(in srgb, var(--type-color, transparent) 12%, transparent), transparent); pointer-events:none}
+/* spazio per ID in basso a destra */
+.card.note-card{padding-bottom:28px}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-grid .full{grid-column:1 / -1}
@@ -89,11 +91,15 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .note-card .card-row{margin:4px 0}
 .note-card .card-actions{display:flex;gap:6px}
 .note-card .type-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--type-color, var(--accent));margin-left:6px}
+.note-id-small{position:absolute;right:10px;bottom:8px;font-size:11px;color:var(--muted)}
+.note-type-title{font-weight:700;font-size:16px;text-align:center;margin:2px 0 6px 0}
 
 /* Chips & media */
 .muted{color:var(--muted)}
 .tags-row .tag-chip{display:inline-block;margin:2px 6px 2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);font-size:12px}
 .animal-chip{display:inline-block;margin:2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#334155;font-size:12px}
+.chip{display:inline-block;margin:2px 6px 2px 0;padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);font-size:12px}
+.chips-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .note-image{margin-top:8px}
 .note-image img{max-width:100%;display:block;border-radius:8px;border:1px solid var(--border);background:#0b1220}
 .note-text{ text-decoration: none; white-space: pre-wrap; display:inline-block }

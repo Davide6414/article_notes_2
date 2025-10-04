@@ -51,11 +51,13 @@ function fillDatalist(id, items){
 let NOTES_ROWS = [];
 let NOTES_ID_TITLE = {};
 let COLLAPSE_STATE = {};
+let SHOW_TITLE_IN_CARDS = false;
 try { COLLAPSE_STATE = JSON.parse(localStorage.getItem('notesCollapse')||'{}'); } catch { COLLAPSE_STATE = {}; }
 
 function setupNotesPage(){
   const tabsRoot = document.getElementById('notes-tabs');
   if (!tabsRoot) return;
+  SHOW_TITLE_IN_CARDS = false;
   const sheets = window.__SHEETS__ || {};
   const notes = sheets['Notes'] || { headers: [], rows: [] };
   NOTES_ROWS = (notes.rows || []).slice(0);
@@ -129,14 +131,15 @@ function renderNoteCard(container, r){
 
   const tags = String(r.tags||'').split(/[;,]/).map(t=>String(t).trim()).filter(Boolean);
   const tagHtml = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(' ');
-  const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '<span class="muted">-</span>';
+  const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '';
   const imgHtml = r.imageLink ? `<div class="note-image"><img src="${escapeAttr(r.imageLink)}" alt="Image" onerror="this.style.display='none'"/></div>` : '';
   const linkedIds = String(r.linkedIds||'').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean);
   const linkedCount = linkedIds.length;
+  const titleRow = SHOW_TITLE_IN_CARDS ? `<div class="card-row"><div class="note-title">${escapeHtml(r.title||'')}</div></div>` : '';
+  const typeTitle = '<div class="note-type-title"'+(typeColor?(' style="color:'+typeColor+'"'):'')+'>' + escapeHtml(r.type||'') + '</div>';
 
   card.innerHTML = `
     <div class="card-header">
-      <div class="note-id">ID: ${escapeHtml(r.id||'')} ${typeColor?'<span class="type-dot"></span>':''}</div>
       <div class="card-actions">
         ${linkedCount ? `<button class="btn btn-small" data-act="open-linked" data-id="${escapeAttr(String(r.id||r.row||''))}">Linked (${linkedCount})</button>` : ''}
         <button class="btn btn-small" data-act="link">Collega</button>
@@ -144,14 +147,12 @@ function renderNoteCard(container, r){
       </div>
     </div>
     <div class="card-body">
+      ${typeTitle}
+      ${titleRow}
       <div class="card-row note-text-row"><span class="note-text">${escapeHtml(r.text||'')}</span></div>
-      <div class="card-row tags-row"><strong>Tags:</strong> ${tagHtml || '<span class="muted">-</span>'}</div>
-      <div class="card-row"><strong>Animal:</strong> ${animalHtml}</div>
-      <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>
-      <div class="card-row"><strong>DOI:</strong> ${escapeHtml(r.doi||'')}</div>
-      <div class="card-row"><strong>Link:</strong> ${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</div>
-      
+      <div class="chips-row">${tagHtml}${animalHtml}${r.doi?`<span class="chip">${escapeHtml(r.doi)}</span>`:''}${r.link?`<a class="chip" href="${escapeAttr(r.link)}" target="_blank">Apri</a>`:''}</div>
       ${imgHtml}
+      <div class="note-id-small">ID ${escapeHtml(r.id||'')}</div>
     </div>`;
   container.appendChild(card);
 
@@ -178,6 +179,7 @@ function renderNoteCard(container, r){
 function setupLinkedPage(){
   const root = document.getElementById('linked-root');
   if (!root) return;
+  SHOW_TITLE_IN_CARDS = true;
   const sheets = window.__SHEETS__ || {};
   const notes = sheets['Notes'] || { headers: [], rows: [] };
   // Prepare index
