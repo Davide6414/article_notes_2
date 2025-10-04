@@ -56,25 +56,50 @@ function fillDatalist(id, items){
 }
 
 function setupNotesPage(){
-  const mount = document.getElementById('notes-list');
-  if (!mount) return;
+  const tabsRoot = document.getElementById('notes-tabs');
+  if (!tabsRoot) return;
   const sheets = window.__SHEETS__ || {};
   const notes = sheets['Notes'] || { headers: [], rows: [] };
-  fillDatalist('dl-notes-type', pluckColumn(notes.rows, 'type'));
-  fillDatalist('dl-notes-tags', splitTags(pluckColumn(notes.rows, 'tags')));
-  const rows = notes.rows || [];
-  const table = document.createElement('table');
-  table.innerHTML = '<thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Tags</th><th>DOI</th><th>Link</th><th>LinkedIDs</th><th>Azioni</th></tr></thead>';
-  const tb = document.createElement('tbody');
-  rows.slice(0, 200).forEach(r => {
-    const tr = document.createElement('tr');
-    tr.dataset.row = r.row;
-    appendNotesCells(tr, r);
-    tb.appendChild(tr);
+  const rows = (notes.rows || []).slice(0); // shallow copy
+  // datalist for editing
+  fillDatalist('dl-notes-type', pluckColumn(rows, 'type'));
+  fillDatalist('dl-notes-tags', splitTags(pluckColumn(rows, 'tags')));
+
+  // Group by title
+  const groups = {};
+  rows.forEach(r => {
+    const key = String(r.title || 'Senza titolo').trim() || 'Senza titolo';
+    (groups[key] = groups[key] || []).push(r);
   });
-  table.appendChild(tb);
-  mount.innerHTML = '<h2>Elenco Note</h2>';
-  mount.appendChild(table);
+  const titles = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+
+  const tablist = tabsRoot.querySelector('.tablist');
+  const panels = tabsRoot.querySelector('.panels');
+  tablist.innerHTML = '';
+  panels.innerHTML = '';
+
+  titles.forEach((t, idx) => {
+    const id = 'tab_' + idx;
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (idx===0?' active':'');
+    btn.type = 'button';
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-controls', id);
+    btn.textContent = t || 'Senza titolo';
+    tablist.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.className = 'tab-panel' + (idx===0?' active':'');
+    panel.id = id;
+    panel.setAttribute('role','tabpanel');
+    const grid = document.createElement('div');
+    grid.className = 'panel-grid';
+    (groups[t] || []).forEach(r => renderNoteCard(grid, r));
+    panel.appendChild(grid);
+    panels.appendChild(panel);
+
+    btn.addEventListener('click', () => activateTab(btn, panel));
+  });
 }
 
 function setupDataPage(){
@@ -155,6 +180,104 @@ function editNotesRow(tr, r){
       appendNotesCells(tr, r);
     } else {
       console.warn('[update] failed', { sheet: 'Notes', row: Number(tr.dataset.row) });
+      alert('Aggiornamento fallito');
+    }
+  });
+}
+
+function activateTab(btn, panel){
+  const tablist = btn.parentElement;
+  tablist.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const panels = tablist.nextElementSibling;
+  if (!panels) return;
+  panels.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  panel.classList.add('active');
+}
+
+function renderNoteCard(container, r){
+  const card = document.createElement('div');
+  card.className = 'card note-card';
+  if (r && r.row) card.dataset.row = String(r.row);
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="note-id">ID: ${escapeHtml(r.id||'')}</div>
+      <div class="card-actions">
+        <button class="btn btn-small" data-act="link">Collega</button>
+        <button class="btn btn-small" data-act="edit">Modifica</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-row"><strong>Title:</strong> ${escapeHtml(r.title||'')}</div>
+      <div class="card-row"><strong>Tags:</strong> ${escapeHtml(r.tags||'')}</div>
+      <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>
+      <div class="card-row"><strong>DOI:</strong> ${escapeHtml(r.doi||'')}</div>
+      <div class="card-row"><strong>Link:</strong> ${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</div>
+      <div class="card-row"><strong>LinkedIDs:</strong> ${escapeHtml(r.linkedIds||'')}</div>
+    </div>`;
+  container.appendChild(card);
+  const btnEdit = card.querySelector('[data-act="edit"]');
+  const btnLink = card.querySelector('[data-act="link"]');
+  if (btnEdit) btnEdit.addEventListener('click', () => editNoteCard(card, r));
+  if (btnLink) btnLink.addEventListener('click', async () => {
+    const selection = await openLinkDialog(r, (window.__SHEETS__ && window.__SHEETS__['Notes'] && window.__SHEETS__['Notes'].rows) || []);
+    if (!selection) return;
+    const linked = selection.join(',');
+    const rowNum = getRowNumberFor(card, r, 'Notes');
+    console.log('[link] chosen', { row: rowNum, linked });
+    const ok = await updateSheet('Notes', rowNum, { linkedIds: linked });
+    if (ok) { r.linkedIds = linked; renderNoteCard(container, r); card.replaceWith(container.lastElementChild); }
+    else { alert('Salvataggio link fallito'); }
+  });
+}
+
+function editNoteCard(card, r){
+  const inputs = {
+    title: input(r.title||''),
+    type: input(r.type||'', 'dl-notes-type'),
+    tags: input(r.tags||'', 'dl-notes-tags'),
+    doi: input(r.doi||''),
+    link: input(r.link||'')
+  };
+  card.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'card-header';
+  header.innerHTML = `<div class="note-id">ID: ${escapeHtml(r.id||'')}</div>`;
+  const actions = document.createElement('div');
+  actions.className = 'card-actions';
+  const btnSave = document.createElement('button'); btnSave.className = 'btn btn-small'; btnSave.textContent = 'Salva';
+  const btnCancel = document.createElement('button'); btnCancel.className = 'btn btn-small'; btnCancel.textContent = 'Annulla';
+  actions.appendChild(btnSave); actions.appendChild(btnCancel); header.appendChild(actions);
+  card.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  const fields = [
+    ['Title','title'], ['Tags','tags'], ['Type','type'], ['DOI','doi'], ['Link','link']
+  ];
+  fields.forEach(([label,key]) => {
+    const row = document.createElement('div');
+    row.className = 'card-row';
+    const lab = document.createElement('strong'); lab.textContent = label + ': ';
+    row.appendChild(lab); row.appendChild(inputs[key]);
+    body.appendChild(row);
+  });
+  card.appendChild(body);
+
+  btnCancel.addEventListener('click', () => {
+    const parent = card.parentElement; if (!parent) return; const idx = Array.from(parent.children).indexOf(card);
+    renderNoteCard(parent, r); parent.children[idx].previousSibling?.remove; card.remove();
+  });
+  btnSave.addEventListener('click', async () => {
+    const patch = Object.fromEntries(Object.entries(inputs).map(([k, el]) => [k, el.value]));
+    const rowNum = getRowNumberFor(card, r, 'Notes');
+    console.log('[update] sending', { sheet: 'Notes', row: rowNum, patch });
+    const ok = await updateSheet('Notes', rowNum, patch);
+    if (ok) {
+      Object.assign(r, patch);
+      const parent = card.parentElement; if (!parent) return; const idx = Array.from(parent.children).indexOf(card);
+      renderNoteCard(parent, r); parent.children[idx].previousSibling?.remove; card.remove();
+    } else {
       alert('Aggiornamento fallito');
     }
   });
