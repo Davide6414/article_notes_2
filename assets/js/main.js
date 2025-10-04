@@ -48,7 +48,8 @@ function fillDatalist(id, items){
 }
 
 let NOTES_ROWS = [];
-let NOTES_MODE = (typeof localStorage !== 'undefined' && localStorage.getItem('notesMode')) || 'tabs';
+let COLLAPSE_STATE = {};
+try { COLLAPSE_STATE = JSON.parse(localStorage.getItem('notesCollapse')||'{}'); } catch { COLLAPSE_STATE = {}; }
 
 function setupNotesPage(){
   const tabsRoot = document.getElementById('notes-tabs');
@@ -61,15 +62,15 @@ function setupNotesPage(){
 
   const toggleBtn = document.getElementById('notesToggle');
   if (toggleBtn) {
-    setToggleLabel(toggleBtn);
+    updateToggleAllLabel(toggleBtn);
     toggleBtn.onclick = () => {
-      NOTES_MODE = NOTES_MODE === 'tabs' ? 'all' : 'tabs';
-      if (typeof localStorage !== 'undefined') localStorage.setItem('notesMode', NOTES_MODE);
-      setToggleLabel(toggleBtn);
-      renderNotesView();
+      const collapseAll = anyExpanded();
+      applyCollapseAll(collapseAll);
+      updateToggleAllLabel(toggleBtn);
+      renderNotesGroups();
     };
   }
-  renderNotesView();
+  renderNotesGroups();
 }
 
 function activateTab(btn, panel){
@@ -81,7 +82,7 @@ function activateTab(btn, panel){
   panel.classList.add('active');
 }
 
-function renderNotesView(){
+function renderNotesGroups(){
   const tabsRoot = document.getElementById('notes-tabs');
   if (!tabsRoot) return;
   const tablist = tabsRoot.querySelector('.tablist');
@@ -89,42 +90,51 @@ function renderNotesView(){
   tablist.innerHTML = '';
   panels.innerHTML = '';
 
-  if (NOTES_MODE === 'all') {
-    tablist.style.display = 'none';
+  // Always render all groups as collapsible panels
+  tablist.style.display = 'none';
+  const groups = {};
+  NOTES_ROWS.forEach(r => { const key = String(r.title || 'Senza titolo').trim() || 'Senza titolo'; (groups[key] = groups[key] || []).push(r); });
+  const titles = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+  titles.forEach((t, idx) => {
+    const id = 'panel_' + idx;
     const panel = document.createElement('div');
-    panel.className = 'tab-panel active';
-    const grid = document.createElement('div');
-    grid.className = 'panel-grid';
-    NOTES_ROWS.forEach(r => renderNoteCard(grid, r));
+    panel.className = 'tab-panel';
+    panel.id = id;
+    const collapsed = !!COLLAPSE_STATE[t];
+    if (collapsed) panel.classList.add('collapsed');
+
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    header.innerHTML = `<h4>${escapeHtml(t||'Senza titolo')}</h4><span class="chev">▾</span>`;
+    header.addEventListener('click', () => {
+      const now = panel.classList.toggle('collapsed');
+      COLLAPSE_STATE[t] = now;
+      try { localStorage.setItem('notesCollapse', JSON.stringify(COLLAPSE_STATE)); } catch {}
+      const toggleBtn = document.getElementById('notesToggle');
+      if (toggleBtn) updateToggleAllLabel(toggleBtn);
+    });
+
+    const grid = document.createElement('div'); grid.className = 'panel-grid';
+    (groups[t] || []).forEach(r => renderNoteCard(grid, r));
+    panel.appendChild(header);
     panel.appendChild(grid);
     panels.appendChild(panel);
-  } else {
-    tablist.style.display = '';
-    const groups = {};
-    NOTES_ROWS.forEach(r => { const key = String(r.title || 'Senza titolo').trim() || 'Senza titolo'; (groups[key] = groups[key] || []).push(r); });
-    const titles = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
-    titles.forEach((t, idx) => {
-      const id = 'tab_' + idx;
-      const btn = document.createElement('button');
-      btn.className = 'tab-btn' + (idx===0?' active':'');
-      btn.type = 'button';
-      btn.setAttribute('role','tab');
-      btn.setAttribute('aria-controls', id);
-      btn.textContent = t || 'Senza titolo';
-      tablist.appendChild(btn);
-      const panel = document.createElement('div');
-      panel.className = 'tab-panel' + (idx===0?' active':'');
-      panel.id = id; panel.setAttribute('role','tabpanel');
-      const grid = document.createElement('div'); grid.className = 'panel-grid';
-      (groups[t] || []).forEach(r => renderNoteCard(grid, r));
-      panel.appendChild(grid); panels.appendChild(panel);
-      btn.addEventListener('click', () => activateTab(btn, panel));
-    });
-  }
+  });
 }
 
-function setToggleLabel(btn){
-  btn.textContent = NOTES_MODE === 'tabs' ? 'Passa a: Tutti' : 'Passa a: Schede';
+function anyExpanded(){
+  // if any panel is not collapsed
+  const allTitles = new Set(NOTES_ROWS.map(r => String(r.title||'Senza titolo').trim() || 'Senza titolo'));
+  for (const t of allTitles) { if (!COLLAPSE_STATE[t]) return true; }
+  return false;
+}
+function applyCollapseAll(collapse){
+  const allTitles = new Set(NOTES_ROWS.map(r => String(r.title||'Senza titolo').trim() || 'Senza titolo'));
+  allTitles.forEach(t => COLLAPSE_STATE[t] = !!collapse);
+  try { localStorage.setItem('notesCollapse', JSON.stringify(COLLAPSE_STATE)); } catch {}
+}
+function updateToggleAllLabel(btn){
+  btn.textContent = anyExpanded() ? 'Comprimi tutti' : 'Espandi tutti';
 }
 
 function renderNoteCard(container, r){
