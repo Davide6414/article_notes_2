@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadSheetsJSONP();
   setupNotesPage();
   setupDataPage();
+  setupLinkedPage();
 });
 
 function loadSheetsJSONP(){
@@ -130,15 +131,14 @@ function renderNoteCard(container, r){
   const tagHtml = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(' ');
   const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '<span class="muted">-</span>';
   const imgHtml = r.imageLink ? `<div class="note-image"><img src="${escapeAttr(r.imageLink)}" alt="Image" onerror="this.style.display='none'"/></div>` : '';
-  // Resolve linked IDs to titles
   const linkedIds = String(r.linkedIds||'').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean);
-  const linkedNames = linkedIds.map(id => NOTES_ID_TITLE[id] || id);
-  const linkedHtml = linkedNames.length ? linkedNames.map(n=>`<span class="tag-chip">${escapeHtml(n)}</span>`).join(' ') : '<span class="muted">-</span>';
+  const linkedCount = linkedIds.length;
 
   card.innerHTML = `
     <div class="card-header">
       <div class="note-id">ID: ${escapeHtml(r.id||'')} ${typeColor?'<span class="type-dot"></span>':''}</div>
       <div class="card-actions">
+        ${linkedCount ? `<button class="btn btn-small" data-act="open-linked" data-id="${escapeAttr(String(r.id||r.row||''))}">Linked (${linkedCount})</button>` : ''}
         <button class="btn btn-small" data-act="link">Collega</button>
         <button class="btn btn-small" data-act="edit">Modifica</button>
       </div>
@@ -150,13 +150,14 @@ function renderNoteCard(container, r){
       <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>
       <div class="card-row"><strong>DOI:</strong> ${escapeHtml(r.doi||'')}</div>
       <div class="card-row"><strong>Link:</strong> ${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</div>
-      <div class="card-row"><strong>Linked:</strong> ${linkedHtml}</div>
+      
       ${imgHtml}
     </div>`;
   container.appendChild(card);
 
   const btnEdit = card.querySelector('[data-act="edit"]');
   const btnLink = card.querySelector('[data-act="link"]');
+  const btnOpenLinked = card.querySelector('[data-act="open-linked"]');
   if (btnEdit) btnEdit.addEventListener('click', () => editNoteCard(card, r));
   if (btnLink) btnLink.addEventListener('click', async () => {
     const selection = await openLinkDialog(r, (window.__SHEETS__ && window.__SHEETS__['Notes'] && window.__SHEETS__['Notes'].rows) || []);
@@ -168,6 +169,40 @@ function renderNoteCard(container, r){
     if (ok) { r.linkedIds = linked; renderNoteCard(container, r); card.replaceWith(container.lastElementChild); }
     else { alert('Salvataggio link fallito'); }
   });
+  if (btnOpenLinked) btnOpenLinked.addEventListener('click', () => {
+    const id = String(r.id || r.row || '').trim();
+    if (id) window.location.href = `linked.html?id=${encodeURIComponent(id)}`;
+  });
+}
+
+function setupLinkedPage(){
+  const root = document.getElementById('linked-root');
+  if (!root) return;
+  const sheets = window.__SHEETS__ || {};
+  const notes = sheets['Notes'] || { headers: [], rows: [] };
+  // Prepare index
+  NOTES_ROWS = (notes.rows || []).slice(0);
+  NOTES_ID_TITLE = {};
+  NOTES_ROWS.forEach(r => { const id = String(r.id || r.row || '').trim(); if (id) NOTES_ID_TITLE[id] = String(r.title || 'Senza titolo'); });
+  const q = new URLSearchParams(window.location.search);
+  const id = q.get('id') || '';
+  const source = NOTES_ROWS.find(r => String(r.id||r.row||'') === id);
+  const grid = document.getElementById('linked-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (!source) {
+    const p = document.createElement('p'); p.textContent = 'Nessuna nota trovata per id=' + id; grid.appendChild(p); return;
+  }
+  // Render source card (opzionale)
+  const srcWrap = document.createElement('div'); srcWrap.className = 'card note-card';
+  const srcTitle = document.createElement('div'); srcTitle.className = 'panel-header'; srcTitle.innerHTML = `<h4>Sorgente: ${escapeHtml(source.title||'Senza titolo')} (ID ${escapeHtml(source.id||'')})</h4>`; srcWrap.appendChild(srcTitle); grid.appendChild(srcWrap);
+  // Linked
+  const linkedIds = String(source.linkedIds||'').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean);
+  if (!linkedIds.length) {
+    const p = document.createElement('p'); p.textContent = 'Nessun elemento collegato.'; grid.appendChild(p); return;
+  }
+  const linkedRows = NOTES_ROWS.filter(r => linkedIds.includes(String(r.id||r.row||'')));
+  linkedRows.forEach(r => renderNoteCard(grid, r));
 }
 
 function editNoteCard(card, r){
