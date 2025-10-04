@@ -48,6 +48,7 @@ function fillDatalist(id, items){
 }
 
 let NOTES_ROWS = [];
+let NOTES_ID_TITLE = {};
 let COLLAPSE_STATE = {};
 try { COLLAPSE_STATE = JSON.parse(localStorage.getItem('notesCollapse')||'{}'); } catch { COLLAPSE_STATE = {}; }
 
@@ -57,6 +58,12 @@ function setupNotesPage(){
   const sheets = window.__SHEETS__ || {};
   const notes = sheets['Notes'] || { headers: [], rows: [] };
   NOTES_ROWS = (notes.rows || []).slice(0);
+  // Build ID->Title map
+  NOTES_ID_TITLE = {};
+  NOTES_ROWS.forEach(r => {
+    const id = String(r.id || r.row || '').trim();
+    if (id) NOTES_ID_TITLE[id] = String(r.title || 'Senza titolo');
+  });
   fillDatalist('dl-notes-type', pluckColumn(NOTES_ROWS, 'type'));
   fillDatalist('dl-notes-tags', splitTags(pluckColumn(NOTES_ROWS, 'tags')));
 
@@ -123,6 +130,10 @@ function renderNoteCard(container, r){
   const tagHtml = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(' ');
   const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '<span class="muted">-</span>';
   const imgHtml = r.imageLink ? `<div class="note-image"><img src="${escapeAttr(r.imageLink)}" alt="Image" onerror="this.style.display='none'"/></div>` : '';
+  // Resolve linked IDs to titles
+  const linkedIds = String(r.linkedIds||'').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean);
+  const linkedNames = linkedIds.map(id => NOTES_ID_TITLE[id] || id);
+  const linkedHtml = linkedNames.length ? linkedNames.map(n=>`<span class="tag-chip">${escapeHtml(n)}</span>`).join(' ') : '<span class="muted">-</span>';
 
   card.innerHTML = `
     <div class="card-header">
@@ -139,7 +150,7 @@ function renderNoteCard(container, r){
       <div class="card-row"><strong>Type:</strong> ${escapeHtml(r.type||'')}</div>
       <div class="card-row"><strong>DOI:</strong> ${escapeHtml(r.doi||'')}</div>
       <div class="card-row"><strong>Link:</strong> ${r.link ? `<a href="${escapeAttr(r.link)}" target="_blank">Apri</a>` : ''}</div>
-      <div class="card-row"><strong>LinkedIDs:</strong> ${escapeHtml(r.linkedIds||'')}</div>
+      <div class="card-row"><strong>Linked:</strong> ${linkedHtml}</div>
       ${imgHtml}
     </div>`;
   container.appendChild(card);
