@@ -109,3 +109,25 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 
 .btn:hover{background:#12332c}
 .btn:active{transform:scale(.98)}
+.note-tags {
+  display: inline;
+  font-size: 0.95em;
+}
+.note-tag {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-right: 2px;
+  display: inline-block;
+}
+.note-tag:not(:last-child)::after {
+  content: ","
+}
+
+/* Inserisci dove vuoi mostrare i tag, ad esempio dentro un panel */
+<div class="note-tags">
+  <span class="note-tag">Flutter</span>
+  <span class="note-tag">HTML</span>
+  <span class="note-tag">CSS</span>
+</div>
