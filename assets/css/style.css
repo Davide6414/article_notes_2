@@ -125,9 +125,3 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
   content: ","
 }
 
-/* Inserisci dove vuoi mostrare i tag, ad esempio dentro un panel */
-<div class="note-tags">
-  <span class="note-tag">Flutter</span>
-  <span class="note-tag">HTML</span>
-  <span class="note-tag">CSS</span>
-</div>
