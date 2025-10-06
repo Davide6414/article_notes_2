@@ -32,7 +32,6 @@ body{
 /* Colorazione card per type */
 .card.note-card{border-left:6px solid var(--border); position:relative}
 .card.note-card.colored{border-left-color:var(--type-color, var(--accent))}
-/* remove heavy overlay for simpler look */
 /* spazio per ID in basso a destra */
 .card.note-card{padding-bottom:28px}
 
@@ -45,6 +44,8 @@ textarea{min-height:110px}
 .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--panel-2);color:var(--text);transition:background .15s ease, transform .05s ease}
 .btn-primary{background:var(--accent-2);color:#072521;border-color:#0f4038}
 .btn-small{padding:6px 10px;font-size:12px}
+.btn:hover{background:#12332c}
+.btn:active{transform:scale(.98)}
 
 table{width:100%;border-collapse:collapse;margin-top:12px}
 th,td{border:1px solid var(--border);padding:8px;text-align:left}
@@ -73,7 +74,6 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 
 /* Tabs for Notes */
 .tabs{margin-top:12px}
-/* toolbar removed */
 .tablist{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px}
 .tab-btn{padding:8px 12px;border:1px solid var(--border);border-radius:20px;background:var(--panel-2);cursor:pointer}
 .tab-btn.active{background:var(--accent-2);color:#072521;border-color:#0f4038}
@@ -98,7 +98,44 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 
 /* Chips & media */
 .muted{color:var(--muted)}
-.tags-row .tag-chip{display:inline-block;margin:2px 6px 2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);font-size:12px}
+
+/* Tag chips styled like header buttons (match header buttons look&feel) */
+.chips-row .tag-chip,
+.tags-row .tag-chip{
+  display:inline-block;
+  margin:2px 6px 2px 0;
+  padding:4px 10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--panel-2);
+  color:var(--text);
+  font-size:12px;
+  line-height:1;
+  cursor:pointer;
+  user-select:none;
+  text-decoration:none; /* if <a> */
+  transition: background .15s ease, transform .05s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+/* colored like header primary on hover */
+.chips-row .tag-chip:hover,
+.tags-row .tag-chip:hover{
+  background:var(--accent-2);
+  color:#072521;
+  border-color:#0f4038;
+  transform: translateY(-1px);
+}
+
+.chips-row .tag-chip:active,
+.tags-row .tag-chip:active{ transform: scale(.98) }
+
+/* keyboard focus */
+.chips-row .tag-chip:focus-visible,
+.tags-row .tag-chip:focus-visible{
+  outline:0;
+  box-shadow:0 0 0 3px rgba(20,184,166,.35);
+}
+
 .animal-chip{display:inline-block;margin:2px 0;padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#334155;font-size:12px}
 .chip{display:inline-block;margin:2px 6px 2px 0;padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:var(--panel-2);font-size:12px}
 .chips-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
@@ -107,45 +144,17 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .note-text{ text-decoration: none; white-space: pre-wrap; display:inline-block }
 .note-text-row{ text-align: center }
 
-.btn:hover{background:#12332c}
-.btn:active{transform:scale(.98)}
-.note-tags {
-  display: inline;
-  font-size: 0.95em;
+.note-tags{display:inline;font-size:.95em}
+.note-tag{
+  display:inline-block;
+  padding:4px 10px;
+  margin:4px;
+  border-radius:12px;
+  background-color:var(--tag-bg,#d2f1ff);
+  color:var(--tag-fg,#004f63);
+  font-size:.9em;
+  font-weight:600;
+  border:1px solid rgba(0,0,0,.1);
+  transition:background-color .2s, transform .1s;
 }
-
-.tag-chip {
-  display: inline-block;
-  padding: 4px 10px;
-  margin: 4px 6px 4px 0;
-  border-radius: 12px;
-  background-color: #d2f1ff;
-  color: #004f63;
-  font-size: 0.85em;
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s, transform 0.1s;
-}
-.tag-chip:hover {
-  background-color: #a8e4ff;
-  transform: scale(1.05);
-}
-
-.note-tag {
-  display: inline-block;
-  padding: 4px 10px;
-  margin: 4px;
-  border-radius: 12px;
-  background-color: var(--tag-bg, #d2f1ff);
-  color: var(--tag-fg, #004f63);
-  font-size: 0.9em;
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s, transform 0.1s;
-}
-.note-tag:hover {
-  background-color: #a8e4ff;
-  transform: scale(1.05);
-}
-
-
+.note-tag:hover{background-color:#a8e4ff;transform:scale(1.05)}
