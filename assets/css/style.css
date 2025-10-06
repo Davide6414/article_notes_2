@@ -113,6 +113,24 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
   display: inline;
   font-size: 0.95em;
 }
+
+.tag-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 4px 6px 4px 0;
+  border-radius: 12px;
+  background-color: #d2f1ff;
+  color: #004f63;
+  font-size: 0.85em;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s, transform 0.1s;
+}
+.tag-chip:hover {
+  background-color: #a8e4ff;
+  transform: scale(1.05);
+}
+
 .note-tag {
   display: inline-block;
   padding: 4px 10px;
