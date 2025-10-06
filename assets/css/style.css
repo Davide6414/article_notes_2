@@ -154,3 +154,24 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
   transition:background-color .2s, transform .1s;
 }
 .note-tag:hover{background-color:#a8e4ff;transform:scale(1.05)}
+
+
+.search-bar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+.search-bar input {
+  width: 60%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color .15s ease;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent-2);
+}
