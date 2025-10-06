@@ -71,6 +71,8 @@ function setupNotesPage(){
   fillDatalist('dl-notes-tags', splitTags(pluckColumn(NOTES_ROWS, 'tags')));
 
   renderNotesGroups();
+  applyStableTagColors(document);
+
 }
 
 function activateTab(btn, panel){
@@ -156,6 +158,8 @@ function renderNoteCard(container, r){
       <div class="note-id-small">ID ${escapeHtml(r.id||'')}</div>
     </div>`;
   container.appendChild(card);
+  applyStableTagColors(card);
+
 
   const btnEdit = card.querySelector('[data-act="edit"]');
   const btnLink = card.querySelector('[data-act="link"]');
@@ -304,18 +308,7 @@ function openLinkDialog(currentRow, allRows){
   });
 }
 
-document.querySelectorAll('.tag-chip').forEach(el => {
-  const name = el.textContent.trim();
-  // hash semplice per generare colore stabile
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360; // mappa su spettro 0–359
-  el.style.backgroundColor = `hsl(${hue}, 70%, 80%)`;
-  el.style.color = `hsl(${hue}, 50%, 25%)`;
-  el.style.border = `1px solid hsl(${hue}, 60%, 60%)`;
-});
+
 
 function pluckColumn(rows, key){ const out = []; (rows||[]).forEach(r => { if (r && r[key]) out.push(r[key]); }); return out; }
 function splitTags(items){ const out = []; (items||[]).forEach(v => String(v||'').split(/[;,]/).forEach(p => { const t = p.trim(); if (t) out.push(t); })); return out; }
@@ -325,4 +318,23 @@ function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
 // Type color ramp
 const TYPE_COLORS = ['#ef4444','#f97316','#f59e0b','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#84cc16'];
 function hashString(s){ let h=0; for (let i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h|=0; } return Math.abs(h); }
+
 function getTypeColor(type){ const t = String(type||'').trim().toLowerCase(); if (!t) return ''; return TYPE_COLORS[ hashString(t) % TYPE_COLORS.length ]; }
+// Colori stabili per i tag uguali
+function applyStableTagColors(root=document){
+  root.querySelectorAll('.tag-chip').forEach(el=>{
+    const name = el.textContent.trim().toLowerCase();
+    let h=0; for(let i=0;i<name.length;i++){ h=((h<<5)-h)+name.charCodeAt(i); h|=0; }
+    h=Math.abs(h)%360;
+    const bg = `hsl(${h},70%,82%)`;
+    const fg = `hsl(${h},40%,20%)`;
+    const bd = `hsl(${h},55%,55%)`;
+    const bgH = `hsl(${h},70%,74%)`;
+    const fgH = `hsl(${h},45%,17%)`;
+    el.style.setProperty('--chip-bg', bg);
+    el.style.setProperty('--chip-fg', fg);
+    el.style.setProperty('--chip-border', bd);
+    el.style.setProperty('--chip-bg-hover', bgH);
+    el.style.setProperty('--chip-fg-hover', fgH);
+  });
+}
