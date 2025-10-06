@@ -85,7 +85,13 @@ th{background:var(--panel-2);color:var(--muted);font-weight:600}
 .panel-header .chev{transition:transform .2s ease}
 .tab-panel.collapsed .panel-header .chev{transform:rotate(-90deg)}
 .panel-title{margin:0 0 8px 0;font-size:14px;color:var(--muted)}
-.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:12px}
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
 
 /* Note cards */
 .note-card .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
