@@ -131,6 +131,7 @@ function renderNoteCard(container, r){
 
   const tags = String(r.tags||'').split(/[;,]/).map(t=>String(t).trim()).filter(Boolean);
   const tagHtml = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(' ');
+  
   const animalHtml = r.animal ? `<span class="animal-chip">${escapeHtml(r.animal)}</span>` : '';
   const imgHtml = r.imageLink ? `<div class="note-image"><img src="${escapeAttr(r.imageLink)}" alt="Image" onerror="this.style.display='none'"/></div>` : '';
   const linkedIds = String(r.linkedIds||'').split(/[;,]/).map(x=>String(x).trim()).filter(Boolean);
@@ -302,6 +303,19 @@ function openLinkDialog(currentRow, allRows){
     btnClose.addEventListener('click', ()=>close(null)); btnCancel.addEventListener('click', ()=>close(null)); btnConfirm.addEventListener('click', ()=>{ const selected = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(i=>i.value); close(selected); }); btnSelAll.addEventListener('click', ()=>{ list.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.checked = true; }); }); btnClrAll.addEventListener('click', ()=>{ list.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.checked = false; }); }); filter.addEventListener('input', ()=>render(filter.value)); overlay.querySelector('.modal-backdrop').addEventListener('click', ()=>close(null));
   });
 }
+
+document.querySelectorAll('.tag-chip').forEach(el => {
+  const name = el.textContent.trim();
+  // hash semplice per generare colore stabile
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360; // mappa su spettro 0–359
+  el.style.backgroundColor = `hsl(${hue}, 70%, 80%)`;
+  el.style.color = `hsl(${hue}, 50%, 25%)`;
+  el.style.border = `1px solid hsl(${hue}, 60%, 60%)`;
+});
 
 function pluckColumn(rows, key){ const out = []; (rows||[]).forEach(r => { if (r && r[key]) out.push(r[key]); }); return out; }
 function splitTags(items){ const out = []; (items||[]).forEach(v => String(v||'').split(/[;,]/).forEach(p => { const t = p.trim(); if (t) out.push(t); })); return out; }
