@@ -71,6 +71,27 @@ function setupNotesPage(){
   fillDatalist('dl-notes-tags', splitTags(pluckColumn(NOTES_ROWS, 'tags')));
 
   renderNotesGroups();
+  // --- Search bar per filtrare note per tag, type o article ---
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'search-bar';
+  searchWrap.innerHTML = `
+    <input id="filter-input" type="text" placeholder="Filtra per tag, tipo o titolo..." />
+  `;
+  tabsRoot.prepend(searchWrap);
+  
+  const inputFilter = searchWrap.querySelector('#filter-input');
+  inputFilter.addEventListener('input', () => {
+    const query = inputFilter.value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.note-card');
+    cards.forEach(card => {
+      const tags = Array.from(card.querySelectorAll('.tag-chip')).map(e => e.textContent.toLowerCase()).join(' ');
+      const type = (card.querySelector('.note-type-title')?.textContent || '').toLowerCase();
+      const title = (card.querySelector('.panel-header h4')?.textContent || '').toLowerCase() || (card.querySelector('.note-title')?.textContent || '').toLowerCase();
+      const match = !query || tags.includes(query) || type.includes(query) || title.includes(query);
+      card.style.display = match ? '' : 'none';
+    });
+  });
+
   applyStableTagColors(document);
 
 }
